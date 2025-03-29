@@ -101,6 +101,7 @@ let enemiesToSpawn = 5;
 let enemiesSpawnedThisWave = 0;
 let lastEnemySpawnTime = 0;
 let currentEnemySpawnRate = ENEMY_SPAWN_RATE_BASE;
+let gameStarted = false;
 let gameOver = false;
 let gamePaused = false;
 let selectingPowerup = false;
@@ -191,28 +192,32 @@ function setupSounds() {
     }
 }
 
-// --- Help Screen & Sound Init ---
-function initializeSoundsOnInteraction() {
-    hideHelp(); // Hide help on first interaction
+function initializeSoundsAndStartGame() {
     if (!soundsInitialized) {
         console.log("Attempting sound initialization...");
         setupSounds();
         soundsInitialized = true;
-        window.removeEventListener('keydown', initializeSoundsOnInteraction);
-        canvas.removeEventListener('mousemove', initializeSoundsOnInteraction);
-        console.log("Sound initialization listeners removed.");
+        gameStarted = true;
         requestAnimationFrame(gameLoop); /* START GAME LOOP */
     }
 }
-window.addEventListener('keydown', initializeSoundsOnInteraction, { once: true });
-canvas.addEventListener('mousemove', initializeSoundsOnInteraction, { once: true });
 
 function showHelp() {
-    if (helpOverlay) helpOverlay.style.display = 'flex';
+    if (helpOverlay) {
+        if (gameStarted) {
+            startPause(); // Only pause if the player has already started playing.
+        }
+        helpOverlay.style.display = 'flex';
+    }
 }
+
 function hideHelp() {
-    if (helpOverlay) helpOverlay.style.display = 'none';
+    if (helpOverlay) {
+        helpOverlay.style.display = 'none';
+        initializeSoundsAndStartGame();
+    }
 }
+
 helpButton.addEventListener('click', showHelp);
 closeHelpButton.addEventListener('click', hideHelp);
 
@@ -429,14 +434,14 @@ function updatePlayer() {
             // Apply dash damage if unlocked
             if (player.unlockedPowerDash) {
                 enemies.forEach((enemy, index) => {
-                    if (!enemies[index] || enemy.invulnerable) return; // Check if enemy exists and isn't temporarily invulnerable
+                    if (!enemy || enemy.isDead || enemy.invulnerable) return; // Check if enemy exists and isn't temporarily invulnerable
                     if (isRectColliding(player, enemy)) {
                         applyDamage(enemy, PLAYER_DASH_DAMAGE, enemy.x + enemy.width / 2, enemy.y);
                         enemy.invulnerable = true; // Make enemy briefly invulnerable to avoid multi-hits from one dash
                         setTimeout(() => { if (enemy) enemy.invulnerable = false; }, 50); // Reset invulnerability after a short time
 
                         if (enemy.health <= 0) {
-                            handleEnemyDeath(index);
+                            handleEnemyDeath(enemy);
                         }
                     }
                 });
@@ -503,7 +508,7 @@ function attemptAutoShoot() {
                 damage: BULLET_DAMAGE,
                 pierceLeft: BULLET_PIERCE_COUNT, // Use current pierce count
                 bounceLeft: BULLET_BOUNCE_COUNT, // Use current bounce count
-                hitEnemies: [] // <--- ADDED THIS LINE: Initialize list of hit enemies
+                hitEnemies: new Set()
             });
         }
     }
@@ -519,12 +524,12 @@ function updateBullets() {
         if (!bullet) continue; // Skip if bullet was somehow removed already
 
         // Homing Logic
-        if (BULLET_HOMING_STRENGTH > 0 && enemies.length > 0) {
+        if (BULLET_HOMING_STRENGTH > 0 && livingEnemies().length > 0) {
             let nearestEnemy = null;
             let minDistSq = Infinity;
 
             enemies.forEach(enemy => {
-                if (!enemy) return;
+                if (!enemy || enemy.isDead) return;
                 const dx = enemy.x + enemy.width / 2 - bullet.x;
                 const dy = enemy.y + enemy.height / 2 - bullet.y;
                 const distSq = dx * dx + dy * dy;
@@ -642,7 +647,7 @@ function createExplosion(x, y) {
         y: y,
         startTime: Date.now(),
         maxRadius: BOMB_RADIUS,
-        hitEnemies: [] // Keep track of enemies already hit by this explosion
+        hitEnemies: new Set() // Keep track of enemies already hit by this explosion
     });
 }
 
@@ -661,7 +666,7 @@ function updateExplosions() {
 
         // Check collision with enemies
         enemies.forEach((enemy, index) => {
-            if (!enemy || exp.hitEnemies.includes(index)) return; // Skip if no enemy or already hit
+            if (!enemy || enemy.isDead || exp.hitEnemies.has(enemy.id)) return; // Skip if no enemy or already hit
 
             const dx = enemy.x + enemy.width / 2 - exp.x;
             const dy = enemy.y + enemy.height / 2 - exp.y;
@@ -670,10 +675,10 @@ function updateExplosions() {
 
             if (distSq < (currentRadius + enemyRadius) * (currentRadius + enemyRadius)) {
                 applyDamage(enemy, BOMB_DAMAGE, enemy.x + enemy.width / 2, enemy.y);
-                exp.hitEnemies.push(index); // Mark enemy as hit
+                exp.hitEnemies.add(enemy.id); // Mark enemy as hit
 
                 if (enemy.health <= 0) {
-                    handleEnemyDeath(index);
+                    handleEnemyDeath(enemy);
                 }
             }
         });
@@ -792,6 +797,7 @@ function spawnEnemy() {
         const scaledCollisionDamage = Math.round(collisionDamage * scalingFactor);
 
         enemies.push({
+            id: Math.random().toString().substring(2),
             x: spawnX, y: spawnY,
             width: enemyConfig.size, height: enemyConfig.size,
             health: scaledHealth, maxHealth: scaledHealth, // Use scaled health for max too
@@ -812,7 +818,8 @@ function updateEnemies() {
     const now = Date.now();
 
     enemies.forEach(enemy => {
-        if (!enemy) return;
+        console.log(enemy.isDead);
+        if (!enemy || enemy.isDead) return;
 
         // Smooth health bar update
         enemy.displayHealth = lerp(enemy.displayHealth, enemy.health, HEALTH_BAR_ANIMATION_SPEED);
@@ -1117,18 +1124,15 @@ function checkCollisions() {
         let bulletRemoved = false; // Flag to track if this bullet is gone
 
         for (let j = enemies.length - 1; j >= 0; j--) {
-            if (!enemies[j]) continue; // Skip if enemy removed
+            if (!enemies[j] || enemies[j].isDead) continue; // Skip if enemy removed or dead
             const enemy = enemies[j];
 
             if (isRectColliding(bullet, enemy)) {
 
-                // ---> START MODIFICATION <---
                 // Check if this bullet has already hit this enemy
-                if (bullet.hitEnemies.includes(j)) { // Assuming 'j' (index) is a stable identifier for the enemy during this frame check
+                if (bullet.hitEnemies.has(enemy.id)) {
                     continue; // Skip this enemy, already hit by this bullet
                 }
-                // ---> END MODIFICATION <---
-
 
                 let damageDealt = bullet.damage;
                 let blockedByShield = false;
@@ -1156,10 +1160,8 @@ function checkCollisions() {
                 // --- Apply Damage (if not blocked) ---
                 if (!blockedByShield) {
 
-                    // ---> START MODIFICATION <---
                     // Record the hit *before* pierce logic
-                    bullet.hitEnemies.push(j);
-                    // ---> END MODIFICATION <---
+                    bullet.hitEnemies.add(enemy.id);
 
                     applyDamage(enemy, damageDealt, enemy.x + enemy.width / 2, enemy.y);
                     try { if (soundsInitialized && hitSynth) hitSynth.triggerAttackRelease("C3", "16n", Tone.now()); }
@@ -1177,7 +1179,7 @@ function checkCollisions() {
 
                 // --- Enemy Death Check ---
                 if (enemy.health <= 0) {
-                    handleEnemyDeath(j);
+                    handleEnemyDeath(enemy);
                 }
 
                 if (bulletRemoved) break; // Stop checking this (now removed) bullet
@@ -1203,7 +1205,7 @@ function checkCollisions() {
 
     // --- Enemy vs Player Collision ---
     enemies.forEach((enemy) => {
-        if (!enemy) return;
+        if (!enemy || enemy.isDead) return;
         if (isRectColliding(player, enemy)) {
             // Ignore collision if player is invincible (dashing or post-dash)
             if (!(player.isDashing && player.unlockedPowerDash) && now > player.postDashInvincibilityEnd) {
@@ -1238,7 +1240,7 @@ function checkCollisions() {
     if (player.hasDamageAura && now - lastAuraDamageTime > PLAYER_AURA_TICK_RATE) {
         lastAuraDamageTime = now; // Reset timer for next tick
         enemies.forEach((enemy, index) => {
-            if (!enemies[index]) return; // Skip if enemy removed
+            if (!enemies[index] || enemies[index].isDead) return; // Skip if enemy removed or dead
 
             const dx = player.x + player.width / 2 - (enemy.x + enemy.width / 2);
             const dy = player.y + player.height / 2 - (enemy.y + enemy.height / 2);
@@ -1251,7 +1253,7 @@ function checkCollisions() {
 
                 // Check enemy death immediately after applying aura damage
                 if (enemy.health <= 0) {
-                    handleEnemyDeath(index);
+                    handleEnemyDeath(enemy);
                 }
             }
         });
@@ -1692,7 +1694,7 @@ function drawBullets() {
 function drawEnemies() {
     const canvasLogicalWidth = canvas.width / (window.devicePixelRatio || 1);
     enemies.forEach(enemy => {
-        if (!enemy) return;
+        if (!enemy || enemy.isDead) return;
         ctx.save();
         const centerX = enemy.x + enemy.width / 2;
         const centerY = enemy.y + enemy.height / 2;
@@ -2091,7 +2093,6 @@ function updatePlayerHealthUI() {
 }
 
 function showMessage(text) {
-    hideHelp(); // Ensure help is hidden when message appears
     messageText.textContent = text;
     messageBox.style.display = 'flex';
     // Ensure styles for centering content are applied if needed
@@ -2106,17 +2107,27 @@ function togglePause() {
     // Can't pause if game over, selecting powerup, or help is showing
     if (gameOver || selectingPowerup || (helpOverlay && helpOverlay.style.display === 'flex')) return;
 
-    gamePaused = !gamePaused;
-    if (gamePaused) {
-        showMessage("Paused (Press 'P' to Resume)");
-        restartButton.style.display = 'none'; // Hide restart button during pause
-        try { if (soundsInitialized) Tone.Transport.pause(); } catch (e) { console.error("Error pausing Tone:", e) }
+    if (!gamePaused) {
+        startPause();
     } else {
-        hideMessage();
-        try { if (soundsInitialized) Tone.Transport.start(); } catch (e) { console.error("Error starting Tone:", e) }
-        gameLoop(); // Resume game loop
+        resumeGame();
     }
 }
+
+function startPause() {
+    gamePaused = true;
+    showMessage("Paused (Press 'P' to Resume)");
+    restartButton.style.display = 'none'; // Hide restart button during pause
+    try { if (soundsInitialized) Tone.Transport.pause(); } catch (e) { console.error("Error pausing Tone:", e) }
+}
+
+function resumeGame() {
+    hideMessage();
+    try { if (soundsInitialized) Tone.Transport.start(); } catch (e) { console.error("Error starting Tone:", e) }
+    gamePaused = false;
+    gameLoop(); // Resume game loop
+}
+
 
 function toggleMusicMute() {
     isMusicMuted = !isMusicMuted;
@@ -2166,12 +2177,10 @@ function resetGameVariables() {
     SHOTGUN_SPREAD_COUNT = 1;
     BULLET_BOUNCE_COUNT = 0;
     BULLET_HOMING_STRENGTH = 0;
-    // PLAYER_AURA_DAMAGE_BASE = 10; // Base damage already set in config
-    // PLAYER_AURA_RADIUS_BASE = 75; // Base radius already set
 
     player = {
         x: canvasLogicalWidth / 2 - PLAYER_SIZE / 2,
-        y: 50, // Start near top-center
+        y: canvasLogicalHeight / 2 - PLAYER_SIZE / 2,
         width: PLAYER_SIZE, height: PLAYER_SIZE,
         maxHealth: PLAYER_HEALTH_MAX_BASE,
         health: PLAYER_HEALTH_MAX_BASE,
@@ -2205,6 +2214,7 @@ function resetGameVariables() {
     enemiesSpawnedThisWave = 0;
     lastEnemySpawnTime = 0;
     currentEnemySpawnRate = ENEMY_SPAWN_RATE_BASE;
+    gameStarted = false;
     gameOver = false;
     gamePaused = false;
     selectingPowerup = false;
@@ -2308,6 +2318,9 @@ function gameLoop(currentTime) {
         drawBullets();
         drawDamageNumbers();
 
+        // --- Clean Up Dead Enemies ---
+        cleanUpDeadEnemies();
+
         // Request next frame
         requestAnimationFrame(gameLoop);
 
@@ -2334,17 +2347,23 @@ muteButton.textContent = isMusicMuted ? "Unmute Music" : "Mute Music"; // Set mu
 fpsCounter.style.display = 'none'; // Hide FPS counter initially
 showHelp(); // Show help initially, sound init starts on interaction
 
-function handleEnemyDeath(enemyIndex) {
-    if (!enemies[enemyIndex]) return;
-    
-    enemies.splice(enemyIndex, 1);
+function handleEnemyDeath(enemy) {
+    enemy.isDead = true;
     score += 10;
     updateScoreUI();
 
     // No need to update bullet hit lists, as the bullets will despawn eventually.
 
     // Check for wave end immediately after kill
-    if (enemies.length === 0 && enemiesSpawnedThisWave >= enemiesToSpawn) {
+    if (livingEnemies().length === 0 && enemiesSpawnedThisWave >= enemiesToSpawn) {
         initiatePowerupSelection();
     }
+}
+
+function livingEnemies() {
+    return enemies.filter(enemy => enemy && !enemy.isDead);
+}
+
+function cleanUpDeadEnemies() {
+    enemies = enemies.filter(enemy => !enemy.isDead);
 }
