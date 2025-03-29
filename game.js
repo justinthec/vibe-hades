@@ -225,7 +225,7 @@ const powerups = [
     { id: 'static_field_size', name: 'Wider Field', description: '+25 Aura Radius', icon: '↔️', type: 'stackable', maxLevel: 4, prerequisite: 'static_field', apply: (p) => { p.auraRadius += 25; }, baseValue: 25 },
     { id: 'static_field_damage', name: 'Intense Field', description: '+50% Aura Damage', icon: '💥', type: 'stackable', maxLevel: 4, prerequisite: 'static_field', apply: (p) => { p.auraDamage *= 1.5; }, multiplier: 1.5 },
     { id: 'dash_cd_down', name: 'Quick Reflex', description: 'Reduce Dash Cooldown by 20%', icon: '⚡️', type: 'stackable', maxLevel: 3, apply: (p) => { PLAYER_DASH_COOLDOWN *= 0.8; }, multiplier: 0.8 },
-    { id: 'dash_damage', name: 'Power Dash', description: `Dash grants invincibility and damages enemies in path for (${PLAYER_DASH_DAMAGE} HP)`, icon: '☄️', type: 'unique', apply: (p) => { p.unlockedPowerDash = true; } },
+    { id: 'dash_damage', name: 'Power Dash', description: `Dash grants invincibility and deals ${PLAYER_DASH_DAMAGE} damage to enemies in path`, icon: '☄️', type: 'unique', apply: (p) => { p.unlockedPowerDash = true; } },
     { id: 'double_dash', name: 'Double Dash', description: 'Gain a second dash charge', icon: '💨', type: 'unique', apply: (p) => { p.maxDashCharges = 2; p.dashCharges = 2; } },
     { id: 'fire_rate_up', name: 'Rapid Fire', description: 'Shoot 20% Faster', icon: '🔥', type: 'stackable', maxLevel: 4, apply: (p) => { BULLET_COOLDOWN *= 0.8; }, multiplier: 0.8 },
     { id: 'bullet_speed_up', name: 'Velocity Shot', description: '+2 Bullet Speed', icon: '🚀', type: 'stackable', maxLevel: 5, apply: (p) => { BULLET_SPEED += 2; }, baseValue: 2 },
