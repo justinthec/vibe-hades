@@ -1,2 +1,10 @@
 # vibe-hades
 can we make a hades roguelike with the power of ✨vibes✨
+
+
+## TODO
+ - Add some form of testing, unit tests? Some sort of functional tests?
+ - Refactor the ever living shit out of this Gemini forsaken code.
+ - Stop relying on enemy index to identify an enemy since that can change during slice. Add a generated ID instead and use those for checks
+ - Increase the visuals of the static field to be further out by the average enemy radius since it looks like an enemy is inside the aura but they dont take damage beacuse their center point isnt in the circle
+ - Change the colors of the aura and bullets etc based off the increased damage power ups

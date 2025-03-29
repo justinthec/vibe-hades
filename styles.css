@@ -1,0 +1,525 @@
+html,
+body {
+    height: 100vh;
+    margin: 0;
+    overflow: hidden;
+    background-color: #0c0c1e;
+}
+
+body {
+    font-family: 'Press Start 2P', cursive;
+    color: #e0e0e0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    padding: 0.5rem;
+    box-sizing: border-box;
+    cursor: crosshair;
+    position: relative;
+}
+
+.game-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    flex-grow: 1;
+    min-height: 0;
+    justify-content: center;
+    max-height: 100vh;
+}
+
+canvas {
+    display: block;
+    border: 3px solid #6a6aff;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(106, 106, 255, 0.5);
+    transition: background-color 1s ease-out, border-color 0.1s ease-in-out;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    width: 100%;
+    height: 100%;
+}
+
+.game-container {
+    position: relative;
+    width: 95%;
+    max-width: 1400px;
+    flex-grow: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 0;
+    aspect-ratio: 16 / 9;
+}
+
+#ui-top {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    max-width: 900px;
+    box-sizing: border-box;
+    flex-shrink: 0;
+    margin-bottom: 0.5rem;
+}
+
+.ui-element,
+#mute-button,
+#help-button {
+    background-color: rgba(40, 40, 60, 0.85);
+    padding: 0.4rem 0.6rem;
+    border-radius: 6px;
+    border: 1px solid #4a4a7f;
+    font-size: 0.7rem;
+    min-width: 60px;
+    height: 45px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    flex-grow: 1;
+    flex-basis: 60px;
+    font-family: 'Press Start 2P', cursive;
+    color: #e0e0e0;
+}
+
+#mute-button,
+#help-button {
+    cursor: pointer;
+    flex-grow: 0;
+    min-width: 80px;
+    flex-basis: 80px;
+}
+
+#mute-button:hover,
+#help-button:hover {
+    background-color: rgba(60, 60, 90, 0.9);
+}
+
+#active-powerups-ui {
+    min-width: 160px;
+    flex-basis: 160px;
+    flex-direction: row;
+    flex-wrap: wrap;
+    height: auto;
+    min-height: 45px;
+    padding: 0.2rem 0.4rem;
+    position: relative;
+}
+
+.powerup-icon {
+    font-size: 1.3rem;
+    margin: 0 0.15rem;
+    cursor: default;
+    display: inline-block;
+    position: relative;
+}
+
+.tooltip-text {
+    visibility: hidden;
+    width: 160px;
+    background-color: #333;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 5px 8px;
+    position: absolute;
+    z-index: 101;
+    top: 115%;
+    left: 50%;
+    margin-left: -80px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    font-size: 0.7rem;
+    font-family: sans-serif;
+    white-space: normal;
+    pointer-events: none;
+    line-height: 1.3;
+}
+
+.tooltip-text .desc {
+    color: #bbb;
+    font-size: 0.65rem;
+    margin-top: 4px;
+    display: block;
+}
+
+.powerup-icon:hover .tooltip-text {
+    visibility: visible;
+    opacity: 1;
+}
+
+#player-health-ui-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    max-width: 450px;
+    flex-shrink: 0;
+    margin-bottom: 0.5rem;
+}
+
+#player-health-bar-bg {
+    width: 100%;
+    height: 18px;
+    background-color: #333;
+    border-radius: 4px;
+    border: 1px solid #111;
+    position: relative;
+    overflow: hidden;
+    flex-grow: 1;
+}
+
+#player-health-bar-fill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    background-color: #2ecc71;
+    width: 100%;
+    border-radius: 3px;
+    transition: background-color 0.3s ease, width 0.1s linear;
+}
+
+#player-health-bar-ghost {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.7);
+    width: 0%;
+    left: 100%;
+    border-radius: 3px;
+    transition: opacity 0.5s ease-out;
+    opacity: 1;
+}
+
+#player-health-text {
+    font-size: 0.8rem;
+    color: #ccc;
+    flex-shrink: 0;
+    min-width: 80px;
+    text-align: right;
+}
+
+.overlay-box {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(10, 10, 20, 0.95);
+    color: white;
+    padding: 30px 40px;
+    border-radius: 10px;
+    border: 2px solid #8a8aff;
+    text-align: center;
+    font-size: 1.2rem;
+    display: none;
+    z-index: 100;
+    min-width: 450px;
+    max-width: 90vw;
+    max-height: 90vh;
+    overflow-y: auto;
+    /* Scroll for debug */
+    box-shadow: 0 0 25px rgba(138, 138, 255, 0.5);
+}
+
+.overlay-box button {
+    margin-top: 20px;
+    padding: 12px 24px;
+    font-family: 'Press Start 2P', cursive;
+    background: linear-gradient(145deg, #7a7aff, #5a5ae0);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    text-align: left;
+    width: 100%;
+    margin-bottom: 12px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+    line-height: 1.2;
+}
+
+.overlay-box button .powerup-icon {
+    margin-right: 0.8rem;
+    font-size: 1.8rem;
+    flex-shrink: 0;
+}
+
+.overlay-box button div {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.overlay-box button:last-child {
+    margin-bottom: 0;
+}
+
+.overlay-box button:hover {
+    background: linear-gradient(145deg, #8a8aff, #6a6ae0);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.5);
+    transform: translateY(-2px);
+}
+
+.overlay-box button:active {
+    transform: translateY(0px);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
+}
+
+#message-box button#restart-button {
+    background: linear-gradient(145deg, #e74c3c, #c0392b);
+    justify-content: center;
+    text-align: center;
+}
+
+#message-box button#restart-button:hover {
+    background: linear-gradient(145deg, #f75c4c, #d0493b);
+}
+
+.powerup-title {
+    font-size: 1.7rem;
+    margin-bottom: 25px;
+    color: #afafff;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.6);
+}
+
+.powerup-description {
+    font-size: 0.9rem;
+    margin-top: 4px;
+    color: #ccc;
+    font-family: sans-serif;
+}
+
+#powerup-options {
+    display: contents;
+}
+
+/* Allow children to flow */
+#reroll-button {
+    /* Style for Reroll Button */
+    background: linear-gradient(145deg, #4CAF50, #388E3C);
+    margin-top: 30px;
+    /* Spacing from powerups */
+    margin-bottom: 15px;
+    justify-content: center;
+    font-size: 0.8rem;
+    /* Smaller font */
+    padding: 8px 16px;
+    /* Reduced padding */
+    width: auto;
+    /* Auto width */
+    align-self: center;
+    /* Center horizontally */
+}
+
+#reroll-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: linear-gradient(145deg, #555, #333);
+}
+
+#debug-continue-button {
+    /* Style for Debug Continue Button */
+    background: linear-gradient(145deg, #ff9800, #f57c00);
+    margin-top: 30px;
+    justify-content: center;
+}
+
+#help-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 10, 0.9);
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 150;
+    padding: 2rem;
+}
+
+.help-content {
+    background-color: rgba(30, 30, 50, 0.95);
+    padding: 2rem;
+    border-radius: 10px;
+    border: 1px solid #5a5aff;
+    max-width: 600px;
+    text-align: left;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    font-family: sans-serif;
+}
+
+.help-content h2 {
+    font-family: 'Press Start 2P', cursive;
+    font-size: 1.5rem;
+    text-align: center;
+    margin-bottom: 1.5rem;
+    color: #afafff;
+}
+
+.help-content p {
+    margin-bottom: 0.8rem;
+}
+
+.help-content ul {
+    list-style: none;
+    padding-left: 0;
+    margin-bottom: 1rem;
+}
+
+.help-content li {
+    margin-bottom: 0.5rem;
+}
+
+.help-content strong {
+    color: #ffff77;
+    font-weight: normal;
+}
+
+#close-help-button {
+    display: block;
+    margin: 1.5rem auto 0 auto;
+    padding: 10px 20px;
+    font-family: 'Press Start 2P', cursive;
+    background: linear-gradient(145deg, #7a7aff, #5a5ae0);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+}
+
+#close-help-button:hover {
+    background: linear-gradient(145deg, #8a8aff, #6a6ae0);
+}
+
+#dash-cooldown-ui,
+#bomb-cooldown-ui {
+    min-width: 100px;
+    font-size: 1rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Grouped dash and bomb */
+#dash-cooldown-ui span,
+#bomb-cooldown-ui span {
+    font-size: 0.7rem;
+    margin-left: 0.3em;
+    color: #ccc;
+}
+
+/* Grouped dash and bomb */
+.cooldown-ready {
+    color: #ffff77;
+}
+
+/* Renamed class */
+.cooldown-active {
+    color: #ffcc77;
+}
+
+/* Renamed class */
+.player-damaged {
+    border-color: #e74c3c !important;
+    box-shadow: 0 0 30px rgba(231, 76, 60, 0.8) !important;
+}
+
+#fps-counter {
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.7);
+    z-index: 200;
+    display: none;
+    background-color: rgba(0, 0, 0, 0.5);
+    padding: 3px 5px;
+    border-radius: 3px;
+}
+
+/* FPS Counter Style */
+
+/* Debug Mode Compact Styles */
+.debug-mode #powerup-selection.overlay-box {
+    padding: 10px 15px;
+    font-size: 0.7rem;
+    min-width: 600px;
+    max-width: 90vw;
+}
+
+.debug-mode #powerup-selection #powerup-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 4px;
+    width: 100%;
+}
+
+.debug-mode #powerup-selection.overlay-box button {
+    margin: 2px;
+    padding: 4px 8px;
+    font-size: 0.65rem;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+    line-height: 1;
+    min-height: unset;
+    height: auto;
+}
+
+.debug-mode #powerup-selection.overlay-box button .powerup-icon {
+    margin-right: 0.3rem;
+    font-size: 1rem;
+}
+
+.debug-mode #powerup-selection .powerup-title {
+    font-size: 1rem;
+    margin-bottom: 8px;
+}
+
+.debug-mode #powerup-selection .powerup-description {
+    font-size: 0.6rem;
+    margin-top: 1px;
+}
+
+.debug-mode #powerup-selection #reroll-button,
+.debug-mode #powerup-selection #debug-continue-button {
+    margin-top: 8px;
+    margin-bottom: 4px;
+    padding: 3px 8px;
+    font-size: 0.6rem;
+    grid-column: 1 / -1;
+    justify-self: center;
+    width: auto;
+}
+
+.debug-mode #powerup-selection.overlay-box button div {
+    display: inline-block;
+    text-align: left;
+    line-height: 1.1;
+}
+
+.debug-mode #powerup-selection.overlay-box button:hover {
+    transform: translateY(-1px);
+}
+
+.debug-mode #powerup-selection.overlay-box button:active {
+    transform: translateY(0px);
+}

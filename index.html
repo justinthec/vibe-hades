@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Top-Down Arena Shooter</title>
+    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="fps-counter">FPS: --</div> <div class="game-wrapper">
+        <div id="ui-top">
+             <div id="score-ui" class="ui-element">Score: 0</div>
+             <div id="wave-ui" class="ui-element">Wave: 1</div>
+             <div id="dash-cooldown-ui" class="ui-element"></div>
+             <div id="bomb-cooldown-ui" class="ui-element"></div> <div id="active-powerups-ui" class="ui-element"> <span style="font-size: 0.7rem; color: #888;">No Powerups</span>
+             </div>
+             <button id="mute-button" class="ui-element">Mute Music</button>
+             <button id="help-button" class="ui-element">Help</button>
+        </div>
+
+        <div id="player-health-ui-container">
+             <div id="player-health-bar-bg">
+                 <div id="player-health-bar-ghost"></div>
+                 <div id="player-health-bar-fill"></div>
+             </div>
+             <div id="player-health-text">--- / ---</div>
+        </div>
+
+        <div class="game-container">
+             <canvas id="gameCanvas"></canvas>
+        </div>
+
+         <div id="help-overlay" style="display: none;"> <div class="help-content">
+                <h2>How to Play</h2>
+                <p>Survive waves of enemies and choose powerful boons!</p>
+                <ul>
+                    <li><strong>Move:</strong> WASD / Arrow Keys</li>
+                    <li><strong>Shoot:</strong> Automatic (Point Mouse Cursor)</li>
+                    <li><strong>Dash:</strong> Space / Shift Key</li>
+                    <li><strong>Pause:</strong> P Key</li>
+                    </ul>
+
+                <button id="close-help-button">Close</button>
+            </div>
+         </div>
+
+         <div id="message-box" class="overlay-box" style="display: none;">
+             <p id="message-text"></p>
+             <button id="restart-button">Restart</button>
+         </div>
+         <div id="powerup-selection" class="overlay-box" style="display: none;">
+             <p class="powerup-title">Choose Your Boon!</p>
+             <div id="powerup-options"></div>
+             </div>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>
