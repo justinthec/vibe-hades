@@ -1,7 +1,7 @@
 # vibe-hades 
 can we make a hades roguelike with the power of ✨vibes✨
 
-[![Play](https://gist.github.com/cxmeel/0dbc95191f239b631c3874f4ccf114e2/raw/play.svg)](https://www.jchan.me/vibe-hades/)
+[![Play](https://gist.githubusercontent.com/cxmeel/0dbc95191f239b631c3874f4ccf114e2/raw/play.svg)](https://www.jchan.me/vibe-hades/)
 
 
 ## TODO
