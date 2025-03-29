@@ -1942,26 +1942,30 @@ function updateDashCooldownUI() {
     }
 
     if (player.dashCharges > 0) { // Ready charges
-        let icons = '';
-        for (let i = 0; i < player.dashCharges; i++) {
-            icons += '💨'; // Ready dash icon
-        }
-        icons += `<span>[${player.dashCharges}/${player.maxDashCharges}]</span>`; // Text indicator
-        dashCooldownUI.innerHTML = icons;
-        dashCooldownUI.classList.remove('cooldown-active');
-        dashCooldownUI.classList.add('cooldown-ready');
+        updateActiveDashChargesUI();
     } else { // On cooldown
         const timeRemaining = player.dashCooldownEnd - now;
         if (timeRemaining > 0) {
             const secondsRemaining = (timeRemaining / 1000).toFixed(1);
-            dashCooldownUI.textContent = `⚡ ${secondsRemaining}s`; // Cooldown icon + time
+            dashCooldownUI.textContent = `💨 ${secondsRemaining}s`;
         } else {
             // Should technically have a charge if timeRemaining <= 0, but handle edge case
-            dashCooldownUI.innerHTML = `<span>[0/${player.maxDashCharges}]</span>`;
+            updateActiveDashChargesUI();
         }
         dashCooldownUI.classList.remove('cooldown-ready');
         dashCooldownUI.classList.add('cooldown-active');
     }
+}
+
+function updateActiveDashChargesUI() {
+    let icons = '';
+    for (let i = 0; i < player.dashCharges; i++) {
+        icons += '💨'; // Ready dash icon
+    }
+    icons += ' READY';
+    dashCooldownUI.innerHTML = icons;
+    dashCooldownUI.classList.remove('cooldown-active');
+    dashCooldownUI.classList.add('cooldown-ready');
 }
 
 // NEW Bomb Cooldown UI Update

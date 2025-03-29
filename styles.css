@@ -430,12 +430,12 @@ canvas {
 
 /* Grouped dash and bomb */
 .cooldown-ready {
-    color: #ffff77;
+    color: #a6ff8b;
 }
 
 /* Renamed class */
 .cooldown-active {
-    color: #ffcc77;
+    color: #888888;
 }
 
 /* Renamed class */
