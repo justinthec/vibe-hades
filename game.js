@@ -218,23 +218,24 @@ closeHelpButton.addEventListener('click', hideHelp);
 
 // --- Power-up Definitions ---
 const powerups = [
-    { id: 'hp_up', name: 'Hearty Meal', description: '+25 Max HP', icon: '❤️', type: 'stackable', maxLevel: 99, apply: (p) => { p.maxHealth += 25; p.health = Math.min(p.maxHealth, p.health + 25); /* Heal by the same amount, capped */ }, baseValue: 25 },
-    { id: 'regen', name: 'Minor Regeneration', description: 'Heal 15 HP Now', icon: '💖', type: 'stackable', maxLevel: 99, apply: (p) => { p.health = Math.min(p.maxHealth, p.health + 15); }, isHealing: true },
-    { id: 'major_regen', name: 'Major Regeneration', description: 'Heal 50 HP Now', icon: '🌟', type: 'stackable', maxLevel: 99, apply: (p) => { p.health = Math.min(p.maxHealth, p.health + 50); }, isHealing: true },
+    { id: 'hp_up', name: 'Divine Growth', description: '+25 Max HP', icon: '💗', type: 'stackable', maxLevel: 99, apply: (p) => { p.maxHealth += 25; p.health = Math.min(p.maxHealth, p.health + 25); /* Heal by the same amount, capped */ }, baseValue: 25 },
+    { id: 'regen', name: 'Minor Regeneration', description: 'Heal 15 HP Now', icon: '❤️‍🩹', type: 'stackable', maxLevel: 99, apply: (p) => { p.health = Math.min(p.maxHealth, p.health + 15); }, isHealing: true },
+    { id: 'major_regen', name: 'Major Regeneration', description: 'Heal 50 HP Now', icon: '❤️', type: 'stackable', maxLevel: 99, apply: (p) => { p.health = Math.min(p.maxHealth, p.health + 50); }, isHealing: true },
     { id: 'static_field', name: 'Static Field', description: 'Emit a damaging aura', icon: '✨', type: 'unique', apply: (p) => { p.hasDamageAura = true; p.auraRadius = PLAYER_AURA_RADIUS_BASE; p.auraDamage = PLAYER_AURA_DAMAGE_BASE; } },
     { id: 'static_field_size', name: 'Wider Field', description: '+25 Aura Radius', icon: '↔️', type: 'stackable', maxLevel: 4, prerequisite: 'static_field', apply: (p) => { p.auraRadius += 25; }, baseValue: 25 },
-    { id: 'static_field_damage', name: 'Intense Field', description: '+50% Aura Damage', icon: '💥', type: 'stackable', maxLevel: 4, prerequisite: 'static_field', apply: (p) => { p.auraDamage *= 1.5; }, multiplier: 1.5 },
-    { id: 'dash_cd_down', name: 'Quick Reflex', description: 'Reduce Dash Cooldown by 20%', icon: '⚡️', type: 'stackable', maxLevel: 3, apply: (p) => { PLAYER_DASH_COOLDOWN *= 0.8; }, multiplier: 0.8 },
-    { id: 'dash_damage', name: 'Power Dash', description: `Dash grants invincibility and deals ${PLAYER_DASH_DAMAGE} damage to enemies in path`, icon: '☄️', type: 'unique', apply: (p) => { p.unlockedPowerDash = true; } },
+    { id: 'static_field_damage', name: 'Field Storm', description: '+50% Aura Damage', icon: '🌩️', type: 'stackable', maxLevel: 4, prerequisite: 'static_field', apply: (p) => { p.auraDamage *= 1.5; }, multiplier: 1.5 },
+    { id: 'dash_cd_down', name: 'Metabolic Boost', description: 'Reduce Dash Cooldown by 20%', icon: '👟', type: 'stackable', maxLevel: 3, apply: (p) => { PLAYER_DASH_COOLDOWN *= 0.8; }, multiplier: 0.8 },
+    { id: 'dash_damage', name: 'Comet Dash', description: `Dash grants invincibility and deals ${PLAYER_DASH_DAMAGE} damage to enemies in path`, icon: '☄️', type: 'unique', apply: (p) => { p.unlockedPowerDash = true; } },
     { id: 'double_dash', name: 'Double Dash', description: 'Gain a second dash charge', icon: '💨', type: 'unique', apply: (p) => { p.maxDashCharges = 2; p.dashCharges = 2; } },
-    { id: 'fire_rate_up', name: 'Rapid Fire', description: 'Shoot 20% Faster', icon: '🔥', type: 'stackable', maxLevel: 4, apply: (p) => { BULLET_COOLDOWN *= 0.8; }, multiplier: 0.8 },
+    { id: 'fire_rate_up', name: 'Rapid Fire', description: 'Shoot 20% Faster', icon: '⏩', type: 'stackable', maxLevel: 4, apply: (p) => { BULLET_COOLDOWN *= 0.8; }, multiplier: 0.8 },
     { id: 'bullet_speed_up', name: 'Velocity Shot', description: '+2 Bullet Speed', icon: '🚀', type: 'stackable', maxLevel: 5, apply: (p) => { BULLET_SPEED += 2; }, baseValue: 2 },
     { id: 'damage_up', name: 'Sharpened Edge', description: '+10 Bullet Damage', icon: '⚔️', type: 'stackable', maxLevel: 5, apply: (p) => { BULLET_DAMAGE += 10; }, baseValue: 10 },
     { id: 'pierce_shot', name: 'Piercing Arrow', description: 'Bullets pierce 1 additional enemy', icon: '➡️', type: 'stackable', maxLevel: 3, apply: (p) => { BULLET_PIERCE_COUNT += 1; }, baseValue: 1 },
-    { id: 'shotgun_blast', name: 'Spread Fire', description: 'Fire 3 bullets in a spread', icon: '💥', type: 'unique', apply: (p) => { SHOTGUN_SPREAD_COUNT = 3; } },
-    { id: 'bullet_bounce', name: 'Ricochet Shot', description: 'Bullets bounce off walls once', icon: '🔄', type: 'unique', apply: (p) => { BULLET_BOUNCE_COUNT = 1; } },
-    { id: 'bullet_homing_stack', name: 'Seeking Shots', description: 'Bullets slightly seek enemies', icon: '🎯', type: 'stackable', maxLevel: 5, apply: (p) => { const level = (p.powerupLevels['bullet_homing_stack'] || 0) + 1; BULLET_HOMING_STRENGTH = level * (MAX_HOMING_STRENGTH / 5); } },
-    /* { id: 'crit_chance', name: 'Precision Strike', description: '+5% Critical Hit Chance', icon: '%', type: 'stackable', maxLevel: 6, apply: (p) => { p.critChance += 0.05; }, baseValue: 0.05}, */ /* Commented Out */
+    { id: 'shotgun_blast', name: 'Spread Fire', description: 'Fire 3 bullets in a spread', icon: '🖖', type: 'unique', apply: (p) => { SHOTGUN_SPREAD_COUNT = 3; } },
+    { id: 'bullet_bounce', name: 'Ricochet Shot', description: 'Bullets bounce off walls once', icon: '🎾', type: 'unique', apply: (p) => { BULLET_BOUNCE_COUNT = 1; } },
+    { id: 'bullet_homing_stack', name: 'Seeking Shots', description: 'Bullets slightly seek enemies', icon: '🧲', type: 'stackable', maxLevel: 5, apply: (p) => { const level = (p.powerupLevels['bullet_homing_stack'] || 0) + 1; BULLET_HOMING_STRENGTH = level * (MAX_HOMING_STRENGTH / 5); } },
+
+    /* { id: 'crit_chance', name: 'Precision Strike', description: '+5% Critical Hit Chance', icon: '🎯', type: 'stackable', maxLevel: 6, apply: (p) => { p.critChance += 0.05; }, baseValue: 0.05}, */ /* Commented Out */
     /* { id: 'crit_damage', name: 'Lethal Force', description: '+25% Critical Hit Damage', icon: '☠️', type: 'stackable', maxLevel: 4, prerequisite: 'crit_chance', apply: (p) => { p.critMultiplier += 0.25; }, baseValue: 0.25 }, */ /* Commented Out */
     { id: 'throw_bomb', name: 'Throw Bomb', description: `Throw a bomb (E Key, ${BOMB_COOLDOWN / 1000}s CD)`, icon: '💣', type: 'unique', apply: (p) => { p.hasBomb = true; } }, // Updated Bomb Description
 ];
@@ -2024,7 +2025,7 @@ function updatePowerupIconsUI() {
                                 case 'static_field_size': tooltipDetail += ` (+${currentLevel * powerupData.baseValue} Radius)`; break;
                                 case 'static_field_damage': tooltipDetail += ` (x${(powerupData.multiplier ** currentLevel).toFixed(2)} Damage)`; break;
                                 case 'dash_cd_down': tooltipDetail += ` (x${(powerupData.multiplier ** currentLevel).toFixed(2)} Cooldown)`; break;
-                                case 'fire_rate_up': const speedMultiplier = (1 / (powerupData.multiplier ** currentLevel)); tooltipDetail += ` (x${speedMultiplier.toFixed(2)} Speed)`; break;
+                                case 'fire_rate_up': tooltipDetail += ` (x${(1 / (powerupData.multiplier ** currentLevel)).toFixed(2)} Speed)`; break;
                                 case 'bullet_speed_up': tooltipDetail += ` (+${currentLevel * powerupData.baseValue} Speed)`; break;
                                 case 'damage_up': tooltipDetail += ` (+${currentLevel * powerupData.baseValue} Damage)`; break;
                                 case 'pierce_shot': tooltipDetail += ` (+${currentLevel * powerupData.baseValue} Pierce)`; break;
